@@ -3,96 +3,140 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <stdio.h>
-
+#include <math.h>
+#include "imu.h"
+#include "capture.h"
+#include "midi.h"
 // serial communication library
 #include "uart.h"
 // UART file descriptor
 // putchar and getchar are in uart.c
 FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
-  
+
 
 //timeout values for each task
-#define t1 200   
-#define begin {
-#define end }
- 
+#define t1 1
+
 // task subroutines
-void task1(void);   //blink at 2 or 8 Hz 
-void initialize(void); //all the usual mcu stuff 
-          
-volatile unsigned char time1; //timeout counter 
-unsigned char led;        //light states  
+void task1(void);   //blink at 2 or 8 Hz
+void initialize(void); //all the usual mcu stuff
+
+volatile unsigned int time1; //timeout counter
+unsigned char led;        //light states
 unsigned int ticks ;      // running time
-         
+
 //**********************************************************
 //timer 0 compare ISR
 ISR (TIMER0_COMPA_vect)
-begin      
+{
   //Decrement the  time if they are not already zero
   if (time1>0)  --time1;
-end  
+}
 
-//**********************************************************       
+
+
+void printHeading(float hx, float hy)
+{
+  hx =-hx;
+  hy =-hy;
+  float heading;
+  
+  if (hy > 0)
+  {
+    heading = 90 - (atan(hx / hy) * (180 / M_PI));
+  }
+  else if (hy < 0)
+  {
+    heading = - (atan(hx / hy) * (180 / M_PI));
+  }
+  else // hy = 0
+  {
+    if (hx < 0) heading = 180;
+    else heading = 0;
+  }
+  
+  printf("Heading: %2.2f\n",heading);
+}
+
+
+
+//**********************************************************
 //Entry point and task scheduler loop
 int main(void)
-begin  
-    initialize();
-  
-    //main task scheduler loop 
-    while(1)
-    begin     
+{
+  initialize();
+  //main task scheduler loop
+  while(1)
+  {
     if (time1==0){time1=t1; task1();}
-    end
-end  
-  
-//**********************************************************          
+  }
+}
+
+//**********************************************************
 //Task 1
-void task1(void) 
-begin 
- 
-    //toggle the second bit
-    led = led ^ 1 ;
-    PORTD = (led<<PORTD2) ;
+void task1(void)
+{
+  write_test_note();
+  return;
+  PORTD^=(1<<PD2);
+  float x,y,z;
+  avg_mag(&x,&y,&z,20);
+  printHeading(x,y);
+  //printf("x:%2.2f:y:%2.2f:z:%2.2f\n",x,y,z);
+  //print time to test USART
+  //read_accel(&x,&y,&z);
+  //printf("x:%02.2f:y:%02.2f:z:%02.2f\n",x,y,z);
+  /*
+  read_gyro(&x,&y,&z);
+  char c = '+';
+  int16_t yy = (int16_t)y;
+  if (yy<0) { yy=-yy; c = '-';}
+  if( yy> 200) yy = 200;
+  if (yy < 10) yy = 0;
+  for(int i = 0; i < yy; i++) {
+    printf("%c",c);
+  }
+  if (yy > 2) {
+   printf("\n");
+  }
+  //for (int i = 0; i <
+  //printf("x:%02.2f:y:%02.2f:z:%02.2f\n",x,y,z);
+  //print time to test USART
 
-  // print time to test USART
-  printf("%d\n\r", ticks++);
+  */
+}
 
-  // get a single character to test USART
-  if (UCSR0A & (1<<RXC0))
-  begin
-    printf("you typed...%c\n\r", UDR0);
-  end
-end  
- 
 
-//********************************************************** 
+//**********************************************************
 //Set it all up
 void initialize(void)
-begin
+{
   //set up the LED port
-    DDRD = (1<<PORTD2) ;  // PORT D.2 is an ouput
-           
-    //set up timer 0 for 1 mSec timebase 
-    TIMSK0= (1<<OCIE0A);  //turn on timer 0 cmp match ISR 
-    OCR0A = 249;      //set the compare register to 250 time ticks
-    //set prescalar to divide by 64 
-    TCCR0B= 3;  
-    // turn on clear-on-match
-    TCCR0A= (1<<WGM01) ;
-    
-    //init the LED status 
-    led=0x00; 
-  
-    //init the task timer
-    time1=t1;  
-    
-  //init the UART -- uart_init() is in uart.c
-    uart_init();
-    stdout = stdin = stderr = &uart_str;
-    fprintf(stdout,"Starting...\n\r");
-    
-    //crank up the ISRs
-    sei();
-end  
+  DDRD = (1<<PORTD2) ;  // PORT D.2 is an ouput
 
-   
+  //set up timer 0 for 1 mSec timebase
+  TIMSK0= (1<<OCIE0A);  //turn on timer 0 cmp match ISR
+  OCR0A = 249;      //set the compare register to 250 time ticks
+  //set prescalar to divide by 64
+  TCCR0B= 3;
+  // turn on clear-on-match
+  TCCR0A= (1<<WGM01) ;
+
+  //init the LED status
+  led=0x00;
+
+  //init the task timer
+  time1=t1;
+  //init the UART -- uart_init() is in uart.c
+  uart_init();
+  stdout = stdin = stderr = &uart_str;
+  sei();
+
+  fprintf(stdout,"Starting imu...\n\r");
+  init_imu(G_SCALE_245DPS, A_SCALE_2G, M_SCALE_2GS, G_ODR_95_BW_125,A_ODR_1600, M_ODR_50);
+    // 1600 Hz (0xA)
+  fprintf(stdout,"Done Starting imu ...\n");
+  //crank up the ISRs
+}
+
+

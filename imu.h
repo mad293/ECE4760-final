@@ -1,6 +1,7 @@
 #ifndef _IMU_H_
 #define _IMU_H_
 
+#include <stdio.h>
 ////////////////////////////
 // LSM9DS0 Gyro Registers //
 ////////////////////////////
@@ -177,11 +178,11 @@
   };
 
 uint16_t
-init_imu(gyro_scale gScl, accel_scale a_scl, mag_scale m_scl,
-        gyro_odr g_odr, accel_odr a_odr,mag_odr m_odr);
+init_imu(enum gyro_scale gScl, enum accel_scale a_scl,enum  mag_scale m_scl,
+        enum gyro_odr g_odr, enum accel_odr a_odr,enum mag_odr m_odr);
 
-void read_gyro(uint16_t * x, uint16_t * y, uint16_t * z, enum scaling scaled);
-void read_accel(uint16_t * x, uint16_t * y, uint16_t * z, enum scaling scaled);
-void read_mag(uint16_t * x, uint16_t * y, uint16_t * z, enum scaling scaled);
+void read_gyro(float * x, float * y, float * z);
+void read_accel(float * x, float * y, float * z);
+void read_mag(float * x, float * y, float * z);
 
 #endif
