@@ -79,42 +79,25 @@ uint16_t init_imu(enum gyro_scale gScl, enum accel_scale aScl,enum  mag_scale mS
   calcmRes(); // Calculate Gs / ADC tick, stored in mRes variable
   calcaRes(); // Calculate g / ADC tick, stored in aRes variable
 
-  fprintf(stdout, "Who Am I...");
-  fflush(stdout);
   uint8_t gTest = g_rb(WHO_AM_I_G);    // Read the gyro WHO_AM_I
   uint8_t xmTest = xm_rb(WHO_AM_I_XM); // Read the accel/mag WHO_AM_I
-  fprintf(stdout, " Done got %x and %x\n",gTest, xmTest);
   if (gTest != 0xD4 || xmTest != 0x49)
     {while(1);}
-  fflush(stdout);
 
-  fprintf(stdout, "Gyro...");
-  fflush(stdout);
   // Gyro initialization stuff:
   initGyro(); // This will "turn on" the gyro. Setting up interrupts, etc.
   setGyroODR(gODR); // Set the gyro output data rate and bandwidth.
   setGyroScale(gScale); // Set the gyro range
-  fprintf(stdout," Done\n");
-  fflush(stdout);
 
-
-  fprintf(stdout, "Accel...");
-  fflush(stdout);
   // Accelerometer initialization stuff:
   initAccel(); // "Turn on" all axes of the accel. Set up interrupts, etc.
   setAccelODR(aODR); // Set the accel data rate.
   setAccelScale(aScl); // Set the accel range.
-  fprintf(stdout, " Done\n");
-  fflush(stdout);
 
-  fprintf(stdout, "Mag...");
-  fflush(stdout);
   // Magnetometer initialization stuff:
   initMag(); // "Turn on" all axes of the mag. Set up interrupts, etc.
   setMagODR(mODR); // Set the magnetometer output data rate.
   setMagScale(mScale); // Set the magnetometer's range.
-  fprintf(stdout, " Done\n");
-  fflush(stdout);
 
   // Once everything is initialized, return the WHO_AM_I registers we read:
   return 0;// (xmTest << 8) | gTest;

@@ -73,21 +73,35 @@ int main(void)
 }
 
 //**********************************************************
+char swit =1;
+int16_t pitch = 0;
 //Task 1
 void task1(void)
 {
-  write_test_note();
-  return;
-  PORTD^=(1<<PD2);
+  //PORTD^=(1<<PD2);
   float x,y,z;
-  avg_mag(&x,&y,&z,20);
-  printHeading(x,y);
+  //avg_mag(&x,&y,&z,20);
+  //printHeading(x,y);
   //printf("x:%2.2f:y:%2.2f:z:%2.2f\n",x,y,z);
   //print time to test USART
   //read_accel(&x,&y,&z);
   //printf("x:%02.2f:y:%02.2f:z:%02.2f\n",x,y,z);
-  /*
+  if (pitch > 32000 && swit) {
+    swit = ! swit;
+  } else if (pitch < -32000 && !swit) {
+    swit = ! swit;
+  }
+  pitch_bend(1,pitch);
   read_gyro(&x,&y,&z);
+  int yy;
+  yy = y;
+  if( yy> 200) yy = 200;
+  if (yy < 200) yy = -200;
+  pitch = yy << 7;
+  if (x < 0) x = -x;
+  uint8_t xx = x;
+  //change_volume(1,xx);
+  /*
   char c = '+';
   int16_t yy = (int16_t)y;
   if (yy<0) { yy=-yy; c = '-';}
@@ -131,11 +145,12 @@ void initialize(void)
   uart_init();
   stdout = stdin = stderr = &uart_str;
   sei();
+  change_instrument(1,17);
+  send_note_off(1,0,0);
+  send_note(1,60,60);
 
-  fprintf(stdout,"Starting imu...\n\r");
   init_imu(G_SCALE_245DPS, A_SCALE_2G, M_SCALE_2GS, G_ODR_95_BW_125,A_ODR_1600, M_ODR_50);
     // 1600 Hz (0xA)
-  fprintf(stdout,"Done Starting imu ...\n");
   //crank up the ISRs
 }
 

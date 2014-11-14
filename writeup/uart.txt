@@ -1,0 +1,5 @@
+57600 baud
+
+hairless serial to midi
+
+simplesynth
