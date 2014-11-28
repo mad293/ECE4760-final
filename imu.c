@@ -62,6 +62,15 @@ float mRes;
   #define write(x) (x)
 //#endif
 
+
+int16_t readTemp()
+{
+  uint8_t temp[2]; // We'll read two bytes from the temperature sensor into temp  
+  xm_rbs(OUT_TEMP_L_XM, temp, 2); // Read 2 bytes, beginning at OUT_TEMP_L_M
+  return  (((int16_t) temp[1] << 12) | temp[0] << 4 ) >> 4; // Temperature is a 12-bit signed integer
+}
+
+
 uint16_t init_imu(enum gyro_scale gScl, enum accel_scale aScl,enum  mag_scale mScl,
             enum gyro_odr gODR,enum  accel_odr aODR,enum  mag_odr mODR)
 {
@@ -92,8 +101,8 @@ uint16_t init_imu(enum gyro_scale gScl, enum accel_scale aScl,enum  mag_scale mS
   // Accelerometer initialization stuff:
   initAccel(); // "Turn on" all axes of the accel. Set up interrupts, etc.
   setAccelODR(aODR); // Set the accel data rate.
-  setAccelScale(aScl); // Set the accel range.
-
+  setAccelScale(aScale); // Set the accel range.
+  
   // Magnetometer initialization stuff:
   initMag(); // "Turn on" all axes of the mag. Set up interrupts, etc.
   setMagODR(mODR); // Set the magnetometer output data rate.
@@ -163,50 +172,23 @@ void initGyro()
   configGyroInt(0x2A, 0, 0, 0, 0); // Trigger interrupt when above 0 DPS...
 
 }
+void assert(char v) {
+  if (!v) {
+    while(1);
+  } 
 
+}
 void initAccel()
 {
-  /* CTRL_REG0_XM (0x1F) (Default value: 0x00)
-  Bits (7-0): BOOT FIFO_EN WTM_EN 0 0 HP_CLICK HPIS1 HPIS2
-  BOOT - Reboot memory content (0: normal, 1: reboot)
-  FIFO_EN - Fifo enable (0: disable, 1: enable)
-  WTM_EN - FIFO watermark enable (0: disable, 1: enable)
-  HP_CLICK - HPF enabled for click (0: filter bypassed, 1: enabled)
-  HPIS1 - HPF enabled for interrupt generator 1 (0: bypassed, 1: enabled)
-  HPIS2 - HPF enabled for interrupt generator 2 (0: bypassed, 1 enabled)   */
   xm_wb(CTRL_REG0_XM, 0x00);
-
-  /* CTRL_REG1_XM (0x20) (Default value: 0x07)
-  Bits (7-0): AODR3 AODR2 AODR1 AODR0 BDU AZEN AYEN AXEN
-  AODR[3:0] - select the acceleration data rate:
-    0000=power down, 0001=3.125Hz, 0010=6.25Hz, 0011=12.5Hz,
-    0100=25Hz, 0101=50Hz, 0110=100Hz, 0111=200Hz, 1000=400Hz,
-    1001=800Hz, 1010=1600Hz, (remaining combinations undefined).
-  BDU - block data update for accel AND mag
-    0: Continuous update
-    1: Output registers aren't updated until MSB and LSB have been read.
-  AZEN, AYEN, and AXEN - Acceleration x/y/z-axis enabled.
-    0: Axis disabled, 1: Axis enabled                  */
   xm_wb(CTRL_REG1_XM,0x57); // 100Hz data rate, x/y/z all enabled
-
-  //Serial.println(xm_rb(CTRL_REG1_XM));
-  /* CTRL_REG2_XM (0x21) (Default value: 0x00)
-  Bits (7-0): ABW1 ABW0 AFS2 AFS1 AFS0 AST1 AST0 SIM
-  ABW[1:0] - Accelerometer anti-alias filter bandwidth
-    00=773Hz, 01=194Hz, 10=362Hz, 11=50Hz
-  AFS[2:0] - Accel full-scale selection
-    000=+/-2g, 001=+/-4g, 010=+/-6g, 011=+/-8g, 100=+/-16g
-  AST[1:0] - Accel self-test enable
-    00=normal (no self-test), 01=positive st, 10=negative st, 11=not allowed
-  SIM - SPI mode selection
-    0=4-wire, 1=3-wire                           */
-  xm_wb(CTRL_REG2_XM, 0x03); // Set scale to 2g
-
-  /* CTRL_REG3_XM is used to set interrupt generators on INT1_XM
-  Bits (7-0): P1_BOOT P1_TAP P1_INT1 P1_INT2 P1_INTM P1_DRDYA P1_DRDYM P1_EMPTY
-  */
-  // Accelerometer data ready on INT1_XM (0x04)
+  xm_wb(CTRL_REG2_XM, 0x00); // Set scale to 2g
   xm_wb(CTRL_REG3_XM, 0x04);
+  
+  assert(xm_rb(CTRL_REG0_XM)== 0x00);
+  assert(xm_rb(CTRL_REG1_XM)==0x57); // 100Hz data rate)== x/y/z all enabled
+  assert(xm_rb(CTRL_REG2_XM)== 0x00); // Set scale to 2g
+  assert(xm_rb(CTRL_REG3_XM)== 0x04);
 }
 
 void initMag()
@@ -266,10 +248,9 @@ void readAccel(int16_t * ax, int16_t * ay, int16_t * az)
 {
   uint8_t temp[6]; // We'll read six bytes from the accelerometer into temp
   xm_rbs(OUT_X_L_A, temp, 6); // Read 6 bytes, beginning at OUT_X_L_A
-  ax[0] = (((int)(temp[1])) << 8) | temp[0];
-  //ax[0] = (temp[1] << 8) | temp[0]; // Store x-axis values into ax
-  ay[0] = (temp[3] << 8) | temp[2]; // Store y-axis values into ay
-  az[0] = (temp[5] << 8) | temp[4]; // Store z-axis values into az
+  *ax = (temp[1] << 8) | temp[0]; // Store x-axis values into ax
+  *ay = (temp[3] << 8) | temp[2]; // Store y-axis values into ay
+  *az = (temp[5] << 8) | temp[4]; // Store z-axis values into az
 }
 
 void readMag(int16_t * mx, int16_t * my, int16_t * mz)
@@ -292,7 +273,7 @@ void readGyro(int16_t * gx, int16_t * gy, int16_t * gz)
 
 
 void read_gyro(float * x, float * y, float * z) {
-  uint16_t xd, yd, zd;
+  int16_t xd, yd, zd;
   readGyro(&xd,&yd,&zd);
   *x = calcGyro(xd);
   *y = calcGyro(yd);
@@ -300,7 +281,7 @@ void read_gyro(float * x, float * y, float * z) {
 }
 
 void read_accel(float * x, float * y, float * z) {
-  uint16_t xd, yd, zd;
+  int16_t xd, yd, zd;
   readAccel(&xd,&yd,&zd);
   *x = calcAccel(xd);
   *y = calcAccel(yd);
@@ -308,7 +289,7 @@ void read_accel(float * x, float * y, float * z) {
 }
 
 void read_mag(float * x, float * y, float * z) {
-  uint16_t xd, yd, zd;
+  int16_t xd, yd, zd;
   readMag(&xd,&yd,&zd);
   *x = calcMag(xd);
   *y = calcMag(yd);
@@ -355,6 +336,7 @@ void setGyroScale(enum gyro_scale gScl)
 
 void setAccelScale(enum accel_scale aScl)
 {
+  //printf("new scale = %d\n",aScl);
   // We need to preserve the other bytes in CTRL_REG2_XM. So, first read it:
   uint8_t temp = xm_rb(CTRL_REG2_XM);
   // Then mask out the accel scale bits:
@@ -490,6 +472,8 @@ void calcmRes()
 
 void imu_wb(uint8_t address, uint8_t subAddress, uint8_t data)
 {
+ if (address == (0x1D<<1)) {
+    }
   i2c_start((address)+I2C_WRITE);
   i2c_write(subAddress);
   i2c_write(data);
@@ -509,6 +493,9 @@ uint8_t imu_rb(uint8_t address, uint8_t subAddress)
 
 void imu_rbs(uint8_t address, uint8_t subAddress, uint8_t * dest, uint8_t count)
 {
+
+ if (address == (0x1D<<1)&& subAddress == OUT_X_L_A) {
+    }
   i2c_start((address)+I2C_WRITE);
 
   i2c_write(multiple(subAddress));

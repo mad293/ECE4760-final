@@ -185,4 +185,5 @@ void read_gyro(float * x, float * y, float * z);
 void read_accel(float * x, float * y, float * z);
 void read_mag(float * x, float * y, float * z);
 
+int16_t readTemp();
 #endif

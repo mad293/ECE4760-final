@@ -45,18 +45,18 @@ void change_volume(uint8_t chan, uint8_t vol) {
 
 void send_controller_command(uint8_t channel, uint8_t controller,uint8_t value) {
   send_status_byte(0b1011,channel);
-  send_byte(m7(controller));
-  send_byte(m7(value));
+  send_byte((controller));
+  send_byte((value));
 }
 
 void send_note(uint8_t channel, uint8_t vel, uint8_t pitch) {
-  send_status_byte(NOTE_ON,1);
+  send_status_byte(NOTE_ON,channel);
   send_byte(pitch);
   send_byte(vel);
 }
 
 void send_note_off(uint8_t channel, uint8_t vel, uint8_t pitch) {
-  send_status_byte(NOTE_OFF,1);
+  send_status_byte(NOTE_OFF,channel);
   send_byte(pitch);
   send_byte(vel);
 }

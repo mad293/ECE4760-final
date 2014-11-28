@@ -6,6 +6,7 @@
 #include <math.h>
 #include "imu.h"
 #include "capture.h"
+#include <util/delay.h>
 #include "midi.h"
 // serial communication library
 #include "uart.h"
@@ -15,12 +16,18 @@ FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 
 
 //timeout values for each task
-#define t1 1
+#define t1 10
 
 // task subroutines
+char play_on = 0;
+char play_off = 0;
 void task1(void);   //blink at 2 or 8 Hz
 void initialize(void); //all the usual mcu stuff
-
+void get_pitch_roll(float *pitch, float *roll);
+void play_note_off(void);
+void play_note_on(uint8_t y);
+volatile char chan1;
+volatile char sharp_on;
 volatile unsigned int time1; //timeout counter
 unsigned char led;        //light states
 unsigned int ticks ;      // running time
@@ -33,33 +40,6 @@ ISR (TIMER0_COMPA_vect)
   if (time1>0)  --time1;
 }
 
-
-
-void printHeading(float hx, float hy)
-{
-  hx =-hx;
-  hy =-hy;
-  float heading;
-  
-  if (hy > 0)
-  {
-    heading = 90 - (atan(hx / hy) * (180 / M_PI));
-  }
-  else if (hy < 0)
-  {
-    heading = - (atan(hx / hy) * (180 / M_PI));
-  }
-  else // hy = 0
-  {
-    if (hx < 0) heading = 180;
-    else heading = 0;
-  }
-  
-  printf("Heading: %2.2f\n",heading);
-}
-
-
-
 //**********************************************************
 //Entry point and task scheduler loop
 int main(void)
@@ -71,63 +51,144 @@ int main(void)
     if (time1==0){time1=t1; task1();}
   }
 }
+char channel = 0;
+ISR(ADC_vect) {
 
-//**********************************************************
-char swit =1;
-int16_t pitch = 0;
-//Task 1
-void task1(void)
-{
-  //PORTD^=(1<<PD2);
-  float x,y,z;
-  //avg_mag(&x,&y,&z,20);
-  //printHeading(x,y);
-  //printf("x:%2.2f:y:%2.2f:z:%2.2f\n",x,y,z);
-  //print time to test USART
-  //read_accel(&x,&y,&z);
-  //printf("x:%02.2f:y:%02.2f:z:%02.2f\n",x,y,z);
-  if (pitch > 32000 && swit) {
-    swit = ! swit;
-  } else if (pitch < -32000 && !swit) {
-    swit = ! swit;
-  }
-  pitch_bend(1,pitch);
-  read_gyro(&x,&y,&z);
-  int yy;
-  yy = y;
-  if( yy> 200) yy = 200;
-  if (yy < 200) yy = -200;
-  pitch = yy << 7;
-  if (x < 0) x = -x;
-  uint8_t xx = x;
-  //change_volume(1,xx);
-  /*
-  char c = '+';
-  int16_t yy = (int16_t)y;
-  if (yy<0) { yy=-yy; c = '-';}
-  if( yy> 200) yy = 200;
-  if (yy < 10) yy = 0;
-  for(int i = 0; i < yy; i++) {
-    printf("%c",c);
-  }
-  if (yy > 2) {
-   printf("\n");
-  }
-  //for (int i = 0; i <
-  //printf("x:%02.2f:y:%02.2f:z:%02.2f\n",x,y,z);
-  //print time to test USART
+  uint8_t analog = ADCH;
+  if (channel == 0) {
 
-  */
+
+    if (analog > 250 && !chan1) {
+      play_on = 1;
+      chan1= 1;
+    }
+
+    if (analog < 245 && chan1) {
+      chan1 = 0;
+      play_off = 1;
+    }
+
+    ADMUX |= (1<<MUX0);
+    ADCSRA |= (1<<ADSC);
+    channel = 1;
+
+  } else if (channel == 1) {
+    ADMUX &= ~(1<<MUX0);
+    if (analog > 240) {
+      sharp_on = 1;
+    } else {
+      sharp_on = 0;
+    }
+    channel = 0;
+  }
 }
 
+//**********************************************************
+void get_pitch_roll(float *pitch, float *roll) {
+
+  float x,y,z;
+  read_accel(&x,&y,&z);
+  *pitch = atan2(x, sqrt(y * y) + (z * z));
+  *roll = atan2(y, sqrt(x * x) + (z * z));
+  *pitch *= 180.0 / M_PI;
+  *roll *= 180.0 / M_PI;
+
+}
+
+uint8_t instrument = 16;
+char swit =0;
+uint8_t note = 60;
+uint8_t base_note = 60;
+uint16_t time = 0;
+#define WAIT_VALUE (300 / t1)
+#define RATE_THRES (240)
+uint16_t wait = WAIT_VALUE;
+//Task 1
+void play_note(uint8_t y);
+char handle_notes(float);
+float old_roll;
+void task1(void)
+{
+
+  ADCSRA |= (1<<ADSC);
+  float x,y,z;
+
+    float roll,pitch;
+    get_pitch_roll(&pitch,&roll);
+  if(handle_notes(roll)) {
+    old_roll = roll;
+  }
+
+
+  if (chan1) {
+    roll -= old_roll;
+    roll/=90.0;
+    roll*=2000;
+    pitch_bend(2,(2000+((int16_t)roll))<<2);
+  } else {
+
+    read_gyro(&x,&y,&z);
+    if (wait) wait--;
+    if (x > RATE_THRES  && !wait) {
+      instrument++;
+      change_instrument(2,instrument%128);
+      wait = WAIT_VALUE;
+    } else if (x<-RATE_THRES && !wait) {
+      wait = WAIT_VALUE;
+      instrument--;
+      change_instrument(2,instrument%128);
+    } else if(y > RATE_THRES && !wait) {
+      wait = WAIT_VALUE;
+      base_note -= 12;
+    } else if(y < -RATE_THRES && !wait) {
+      wait = WAIT_VALUE;
+      base_note += 12;
+    }
+  }
+}
+
+char handle_notes(float roll)
+{
+  int8_t sharp = 0;
+  if (sharp_on) {
+    sharp = 1;
+  }
+  if (play_on) {
+    float froll = roll;
+    froll /= 90.0;
+    froll *= 6;
+    int8_t iroll = (int8_t)froll;
+    iroll *= 2;
+    play_note_on(base_note+(iroll+sharp));
+    PORTD |= (1<<PD2);
+    play_on = 0;
+    return 1;
+  }else
+  if (play_off) {
+    play_note_off();
+    PORTD &= ~(1<<PD2);
+    play_off = 0;
+  }
+  return 0;
+}
+
+void play_note_on(uint8_t y) {
+
+  note =(uint8_t)y;
+  send_note(2,100,note);
+}
+void play_note_off(void) {
+
+  send_note_off(2,100,note);
+}
 
 //**********************************************************
 //Set it all up
 void initialize(void)
 {
   //set up the LED port
-  DDRD = (1<<PORTD2) ;  // PORT D.2 is an ouput
-
+  DDRD = (1<<PD2) ;  // PORT D.2 is an ouput
+  PORTD &= ~(1<<PD2);
   //set up timer 0 for 1 mSec timebase
   TIMSK0= (1<<OCIE0A);  //turn on timer 0 cmp match ISR
   OCR0A = 249;      //set the compare register to 250 time ticks
@@ -144,14 +205,20 @@ void initialize(void)
   //init the UART -- uart_init() is in uart.c
   uart_init();
   stdout = stdin = stderr = &uart_str;
+  ADMUX = (1<<ADLAR) | (1<<REFS0);
+  ADCSRA = (1<<ADEN) | (1<<ADIF) | (1<<ADIE) + 7;
   sei();
-  change_instrument(1,17);
-  send_note_off(1,0,0);
-  send_note(1,60,60);
+  change_instrument(2,17);
+  change_instrument(4,17);
+  send_note_off(2,0,0);
+  send_note(3,60,60);
+  send_note_off(2,0,0);
+  send_note(3,60,60);
 
-  init_imu(G_SCALE_245DPS, A_SCALE_2G, M_SCALE_2GS, G_ODR_95_BW_125,A_ODR_1600, M_ODR_50);
-    // 1600 Hz (0xA)
+  init_imu(G_SCALE_245DPS, A_SCALE_2G, M_SCALE_2GS, G_ODR_95_BW_125,A_ODR_50, M_ODR_50);
+  // 1600 Hz (0xA)
   //crank up the ISRs
+  ADCSRA |= (1<<ADSC);
 }
 
 
