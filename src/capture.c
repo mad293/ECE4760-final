@@ -4,6 +4,14 @@
 
 
 
+/**
+* @brief
+*
+* @param x
+* @param y
+* @param z
+* @param samples
+*/
 void avg_mag(float *x, float *y, float *z, char samples) {
   float tx,ty,tz;
   *x =0; *y=0; *z=0;
