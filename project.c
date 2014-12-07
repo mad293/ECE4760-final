@@ -16,7 +16,7 @@ FILE uart_str = FDEV_SETUP_STREAM(uart_putchar, uart_getchar, _FDEV_SETUP_RW);
 
 
 //timeout values for each task
-#define t1 10
+#define t1 25
 
 // task subroutines
 char play_on = 0;
@@ -98,10 +98,10 @@ void get_pitch_roll(float *pitch, float *roll) {
 uint8_t instrument = 16;
 char swit =0;
 uint8_t note = 60;
-uint8_t base_note = 60;
+uint8_t base_note = 0;
 uint16_t time = 0;
 #define WAIT_VALUE (300 / t1)
-#define RATE_THRES (240)
+#define RATE_THRES (270)
 uint16_t wait = WAIT_VALUE;
 //Task 1
 void play_note(uint8_t y);
@@ -120,13 +120,12 @@ void task1(void)
   }
 
 
-  if (chan1) {
+  if (chan1 && sharp_on) {
     roll -= old_roll;
     roll/=90.0;
     roll*=2000;
     pitch_bend(2,(2000+((int16_t)roll))<<2);
   } else {
-
     read_gyro(&x,&y,&z);
     if (wait) wait--;
     if (x > RATE_THRES  && !wait) {
@@ -139,14 +138,14 @@ void task1(void)
       change_instrument(2,instrument%128);
     } else if(y > RATE_THRES && !wait) {
       wait = WAIT_VALUE;
-      base_note -= 12;
+      base_note -= 1;
     } else if(y < -RATE_THRES && !wait) {
       wait = WAIT_VALUE;
-      base_note += 12;
+      base_note += 1;
     }
   }
 }
-
+char cmajor[15] = {48, 50, 52, 53, 55, 57, 59, 60, 62, 64, 65, 67, 69, 71, 72};
 char handle_notes(float roll)
 {
   int8_t sharp = 0;
@@ -156,10 +155,11 @@ char handle_notes(float roll)
   if (play_on) {
     float froll = roll;
     froll /= 90.0;
-    froll *= 6;
+    froll *= 7;
     int8_t iroll = (int8_t)froll;
-    iroll *= 2;
-    play_note_on(base_note+(iroll+sharp));
+    iroll += 8;
+
+    play_note_on(base_note+cmajor[iroll]);
     PORTD |= (1<<PD2);
     play_on = 0;
     return 1;
