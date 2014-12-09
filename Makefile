@@ -1,5 +1,5 @@
 
-_SOURCES=uart.c project.c imu.c twimaster.c capture.c midi.c
+_SOURCES=uart.c project.c imu.c twimaster.c midi.c
 SOURCES=$(addprefix src/,$(_SOURCES))
 
 OBJECTS=$(addprefix obj/,$(notdir $(SOURCES:.c=.o)))

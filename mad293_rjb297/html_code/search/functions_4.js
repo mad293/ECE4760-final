@@ -1,0 +1,21 @@
+var searchData=
+[
+  ['i2c_5finit',['i2c_init',['../i2cmaster_8h.html#a5730d9445429351b9f750084c5cb5aae',1,'i2c_init(void):&#160;twimaster.c'],['../twimaster_8c.html#a5730d9445429351b9f750084c5cb5aae',1,'i2c_init(void):&#160;twimaster.c']]],
+  ['i2c_5fread',['i2c_read',['../i2cmaster_8h.html#a669c0357614a79b3b35ae815f6f50e82',1,'i2cmaster.h']]],
+  ['i2c_5freadack',['i2c_readAck',['../i2cmaster_8h.html#a32ac22052d55f93375b024192217db21',1,'i2c_readAck(void):&#160;twimaster.c'],['../twimaster_8c.html#a32ac22052d55f93375b024192217db21',1,'i2c_readAck(void):&#160;twimaster.c']]],
+  ['i2c_5freadnak',['i2c_readNak',['../i2cmaster_8h.html#ad89e839fc17b05fbb5dd79897c55234e',1,'i2c_readNak(void):&#160;twimaster.c'],['../twimaster_8c.html#ad89e839fc17b05fbb5dd79897c55234e',1,'i2c_readNak(void):&#160;twimaster.c']]],
+  ['i2c_5frep_5fstart',['i2c_rep_start',['../i2cmaster_8h.html#a93a9461da34295250ba935bbce9a980d',1,'i2c_rep_start(unsigned char addr):&#160;twimaster.c'],['../twimaster_8c.html#a70c934b61f3c6ba8524104a1d7197d30',1,'i2c_rep_start(unsigned char address):&#160;twimaster.c']]],
+  ['i2c_5fstart',['i2c_start',['../i2cmaster_8h.html#a58dfadce0c2fee4bfac01df6cd2b4477',1,'i2c_start(unsigned char addr):&#160;twimaster.c'],['../twimaster_8c.html#aa3d328f00326115e9c660ccc838417c8',1,'i2c_start(unsigned char address):&#160;twimaster.c']]],
+  ['i2c_5fstart_5fwait',['i2c_start_wait',['../i2cmaster_8h.html#aee3747a01738315cd5580588994b6c28',1,'i2c_start_wait(unsigned char addr):&#160;twimaster.c'],['../twimaster_8c.html#a0ef0de570e080339e04edb1176807560',1,'i2c_start_wait(unsigned char address):&#160;twimaster.c']]],
+  ['i2c_5fstop',['i2c_stop',['../i2cmaster_8h.html#ad35d4e4f52ca74b503d5e5e1e0a3f5f3',1,'i2c_stop(void):&#160;twimaster.c'],['../twimaster_8c.html#ad35d4e4f52ca74b503d5e5e1e0a3f5f3',1,'i2c_stop(void):&#160;twimaster.c']]],
+  ['i2c_5fwrite',['i2c_write',['../i2cmaster_8h.html#add947aade44ed6b7f92265f9dec4a711',1,'i2c_write(unsigned char data):&#160;twimaster.c'],['../twimaster_8c.html#add947aade44ed6b7f92265f9dec4a711',1,'i2c_write(unsigned char data):&#160;twimaster.c']]],
+  ['imu_5frb',['imu_rb',['../imu_8c.html#a2636c8e7f9e78ce17768481f2cd80d7f',1,'imu_rb(uint8_t address, uint8_t subAddress):&#160;imu.c'],['../imu_8h.html#a2636c8e7f9e78ce17768481f2cd80d7f',1,'imu_rb(uint8_t address, uint8_t subAddress):&#160;imu.c']]],
+  ['imu_5frbs',['imu_rbs',['../imu_8c.html#ab3ca549f8971b9ca071091c41531f5aa',1,'imu_rbs(uint8_t address, uint8_t subAddress, uint8_t *dest, uint8_t count):&#160;imu.c'],['../imu_8h.html#ab3ca549f8971b9ca071091c41531f5aa',1,'imu_rbs(uint8_t address, uint8_t subAddress, uint8_t *dest, uint8_t count):&#160;imu.c']]],
+  ['imu_5fwb',['imu_wb',['../imu_8c.html#a298ca0781edc4e53646b2500855ab951',1,'imu_wb(uint8_t address, uint8_t subAddress, uint8_t data):&#160;imu.c'],['../imu_8h.html#a298ca0781edc4e53646b2500855ab951',1,'imu_wb(uint8_t address, uint8_t subAddress, uint8_t data):&#160;imu.c']]],
+  ['init_5fimu',['init_imu',['../imu_8c.html#ae0dd860772a2887183a0c74a8a2b8b20',1,'init_imu(enum gyro_scale gScl, enum accel_scale aScl, enum mag_scale mScl, enum gyro_odr gODR, enum accel_odr aODR, enum mag_odr mODR):&#160;imu.c'],['../imu_8h.html#a71c3bda831dd8a5210481006217169a3',1,'init_imu(enum gyro_scale gScl, enum accel_scale a_scl, enum mag_scale m_scl, enum gyro_odr g_odr, enum accel_odr a_odr, enum mag_odr m_odr):&#160;imu.c']]],
+  ['initaccel',['initAccel',['../imu_8c.html#af4ff73ecc077819902ccc73c459a529f',1,'initAccel():&#160;imu.c'],['../imu_8h.html#a361be1ce36e85790c000c5c93c004982',1,'initAccel(void):&#160;imu.c']]],
+  ['initgyro',['initGyro',['../imu_8c.html#a36de56a22a54f8dc9451e0eb853802a0',1,'initGyro():&#160;imu.c'],['../imu_8h.html#a36de56a22a54f8dc9451e0eb853802a0',1,'initGyro():&#160;imu.c']]],
+  ['initialize',['initialize',['../project_8c.html#a9efe22aaead3a5e936b5df459de02eba',1,'project.c']]],
+  ['initmag',['initMag',['../imu_8c.html#ade4cb27b71eb580ca01eb387d6f44757',1,'initMag():&#160;imu.c'],['../imu_8h.html#a55494822ccdd06804d0a5c3bf7b99000',1,'initMag(void):&#160;imu.c']]],
+  ['isr',['ISR',['../project_8c.html#aec43762dc86e029b395d4e5819192c2d',1,'ISR(TIMER0_COMPA_vect):&#160;project.c'],['../project_8c.html#a05c2e5b588ced1cd7312f5b0edc5b295',1,'ISR(ADC_vect):&#160;project.c']]]
+];
