@@ -1,10 +1,10 @@
 
-SOURCES=uart.c project.c imu.c twimaster.c capture.c midi.c
+_SOURCES=uart.c project.c imu.c twimaster.c capture.c midi.c
+SOURCES=$(addprefix src/,$(_SOURCES))
 
-#ASM=i2cmaster.S
-ASM=
-OBJECTS=$(SOURCES:.c=.o)
+OBJECTS=$(addprefix obj/,$(notdir $(SOURCES:.c=.o)))
 
+CONFIG=doxygen.config
 CC=avr-gcc
 CPU=atmega1284p
 FLAGS=-mmcu=$(CPU)
@@ -19,17 +19,20 @@ EXECUTABLE=project
 
 all: $(SOURCES) $(EXECUTABLE)
 
-$(EXECUTABLE): $(OBJECTS) $(ASM)
-	$(CC) $(FLAGS) $(LDFLAGS) $(ASM) $(OBJECTS) -o $@
+$(EXECUTABLE): $(OBJECTS)
+	$(CC) $(FLAGS) $(LDFLAGS) $(OBJECTS) -o $@
 	avr-objcopy -O ihex -R .eeprom $(EXECUTABLE) $(EXECUTABLE).hex
+	rm project
 
 install: $(EXECUTABLE)
 	avrdude -c $(PROGRAMMER) -p $(CPU) -F -B 1 -U flash:w:$(EXECUTABLE).hex
 
 clean:
-	rm $(OBJECTS) $(EXECUTABLE) $(EXECUTABLE).hex
+	rm -rf html
+	rm $(OBJECTS) $(EXECUTABLE).hex
 
-.c.o:
+obj/%.o: src/%.c
 	$(CC) $(FLAGS) $(CFLAGS) -c $< -o $@
 
-
+doc:
+	doxygen $(CONFIG)
